@@ -1,0 +1,13 @@
+{
+  "name": "bank-manager",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "A simple application for managing a bank account: crediting and debiting funds to the account, displaying the current account balance.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "happymeatball-mk",
+  "license": "ISC"
+}
