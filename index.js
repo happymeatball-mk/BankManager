@@ -13,24 +13,17 @@ const personId = bank.register({
 
 const personId1 = bank.register({
     name: 'Simon Eastwood',
-    balance: 1000
+    balance: 1000,
+    limit: amount => amount < 100
 });
 
-//'Pitter Black' operations
-bank.emit('add', personId, 20);
-bank.emit('get', personId, (balance) => {
-    console.log(`I have ${balance}₴`); 
-});
-bank.emit('withdraw', personId, 50);
-bank.emit('get', personId, (balance) => {
-    console.log(`I have ${balance}₴`); 
-});
-
-//'Simon Eastwood' operations
-bank.emit('add', personId1, 20);
+bank.emit('send', personId1, 100, personId)
 bank.emit('get', personId1, (balance) => {
     console.log(`I have ${balance}₴`); 
 });
 
-//wrong id - 'error'-event
-bank.emit('add', 'personId3', 20);
+bank.emit('get', personId, (balance) => {
+    console.log(`I have ${balance}₴`); 
+});
+
+bank.emit('send', personId1, 100, 'personId')
