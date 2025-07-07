@@ -8,7 +8,7 @@ bank.on('error', (err) => {
 
 const personId = bank.register({
     name: 'Pitter Black',
-    balance: 100
+    balance: 900
 });
 
 const personId1 = bank.register({
@@ -17,13 +17,15 @@ const personId1 = bank.register({
     limit: amount => amount < 100
 });
 
-bank.emit('send', personId1, 100, personId)
+bank.emit('changeLimit', personId, (amount, currentBalance, updatedBalance) => {
+    return amount < 100 && updatedBalance > 700 && currentBalance > 800;
+});
+
+bank.emit('send', personId, 90, personId1)
+bank.emit('get', personId, (balance) => {
+    console.log(`I have ${balance}₴`); 
+});
 bank.emit('get', personId1, (balance) => {
     console.log(`I have ${balance}₴`); 
 });
 
-bank.emit('get', personId, (balance) => {
-    console.log(`I have ${balance}₴`); 
-});
-
-bank.emit('send', personId1, 100, 'personId')

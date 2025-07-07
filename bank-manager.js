@@ -1,5 +1,5 @@
-import { EventEmitter } from 'node:events'
-import { v4 as uuidv4 } from 'uuid';
+import EventEmitter from 'node:events'
+import crypto from 'node:crypto';
 
 class Bank extends EventEmitter {
     constructor() {
@@ -14,7 +14,7 @@ class Bank extends EventEmitter {
     }
 
     #idCheck(id) {
-        if (!id) {
+        if (!this.clientsBase.has(id)) {
             this.emit('error', new Error(`id does't exist`));
             return false;
         }
@@ -34,7 +34,7 @@ class Bank extends EventEmitter {
             };
         }
 
-        const id = uuidv4();
+        const id = crypto.randomUUID();
         this.clientsBase.set(id, {name, balance, limit});
         return id;
     }
@@ -51,26 +51,37 @@ class Bank extends EventEmitter {
     }
 
     #get(id, balanceStatus) {
+        if (!this.#idCheck(id)) {
+            return;
+        }
         const client = this.clientsBase.get(id);
-        this.#idCheck(client);
         balanceStatus(client.balance);
     }
 
     #withdraw(id, amount) {
+        if (!this.#idCheck(id)) {
+            return;
+        }
+
         if (amount <= 0) {
             this.emit('error', new Error(`Wrong amount value`));
             return;
         }
-
+        
         const client = this.clientsBase.get(id);
-        this.#idCheck(client);
+        
+        const updatedBalance = client.balance - amount;
+        if (!client.limit(amount, client.balance, updatedBalance)) {
+            this.emit('error', new Error(`Limit conflict`));
+            return;
+        } 
 
         if (client.balance < amount) {
             this.emit('error', new Error(`Not enough funds in the account`));
             return;
-        } else {
-            client.balance -= amount;
-        }
+        } 
+        client.balance -= amount;
+        
     }
 
     #send(idSender, amount, idReceiver) {
@@ -79,29 +90,36 @@ class Bank extends EventEmitter {
             return;
         }
 
-        const Sender = this.clientsBase.get(idSender);
-        this.#idCheck(Sender);
-
-        const Receiver = this.clientsBase.get(idReceiver);
-        this.#idCheck(Receiver);
-        
-        if (!Sender.limit(amount)) {
-            this.emit('error', new Error('Limit error'));
+        if (!this.#idCheck(idSender)) {
             return;
-        } else {
-            if (Sender.balance < amount) {
-                this.emit('error', new Error(`Not enough funds in the account`));
-                return;
-            } else {
-                Sender.balance -= amount;
-                Receiver.balance += amount;
-            }
         }
+        const Sender = this.clientsBase.get(idSender);
+
+        if (!this.#idCheck(idReceiver)) {
+            return;
+        }
+        const Receiver = this.clientsBase.get(idReceiver);
+        
+        const updatedBalance = Sender.balance - amount;
+        if (!Sender.limit(amount, Sender.balance, updatedBalance)) {
+            this.emit('error', new Error(`Limit conflict`));
+            return;
+        } 
+
+        if (Sender.balance < amount) {
+            this.emit('error', new Error(`Not enough funds in the account`));
+            return;
+        } 
+
+        Sender.balance -= amount;
+        Receiver.balance += amount;
     }
 
     #changeLimit(id, callback) {
+        if (!this.#idCheck(id)) {
+            return;
+        }
         const client = this.clientsBase.get(id);
-        this.#idCheck(client);
         client.limit = callback;
     }
 }
